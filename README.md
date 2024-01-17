@@ -2,36 +2,30 @@
 
 ## Introduction
 
-This is meant to be a minimal working example of the C++ RDataFrame framework developed for the `h->aa->bbtautau` analysis. 
+This is meant to be a minimal working example of the C++ RDataFrame framework developed for the `h->aa->bbtautau` analysis.
 
 Current features:
-- Instructions to run in a virtual environment inside a CMSSW environment. There is no `cmsRun` command here, we just use CMSSW for the environment. 
+- Instructions to run in a CMSSW environment, tested on lxplus9. There is no `cmsRun` command here, we just use CMSSW for the environment.
 
 
 
-## Setup (do only once)
+## Install
 
-On `lxplus` (`lxplus9`, the default as of December 2023), any recent `CMSSW` should work, we do not have any `cmsRun` configs actually.
+On `lxplus` (`lxplus9`, the default as of December 2023): 
 ```bash
 cmsrel CMSSW_13_1_0_pre4
 cd src
-
-cd demoLunaFramework
-cmsenv
+git clone ssh://git@gitlab.cern.ch:7999/skkwan/demo-luna-framework.git
+cd demo-luna-framework
 ```
 
-Next, we make a virtual environment: 
-
+## To run the example
+The current skimming example is in the `skim/` directory:
 ```bash
 cmsenv
-virtualenv venv-LUNA-demo
-source venv-LUNA-demo/bin/activate
-(venv-LUNA-demo) $ pip install -r environment-LUNA-requirements.txt
+voms-proxy-init --voms cms 
+cd skim/
+bash runSkim.sh
 ```
 
-## At the start of each session
-```bash
-cmsenv
-source venv-LUNA-demo/bin/activate
-# and get voms-proxy-init certificate too
-```
+This compiles `skim.cxx` into an executable `skim` and calls it on a remotely-located input NanoAOD file, and outputs a file to the current directory.
