@@ -50,6 +50,14 @@ namespace Helper {
         return deltaR;
     }
 
+    /*
+     * Compute MT variable
+     */
+    float compute_mt(float pt_1, float phi_1, float pt_met, float phi_met) {
+        const auto dphi = Helper::DeltaPhi(phi_1, phi_met);
+        return std::sqrt(2.0 * pt_1 * pt_met * (1.0 - std::cos(dphi)));
+    }
+
     /**********************************************************/
 
     /*

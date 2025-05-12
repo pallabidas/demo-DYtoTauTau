@@ -30,30 +30,32 @@
 /*
  * Main function of the skimming step of the analysis.
  */
+template <typename T>
+auto AddEventWeight(T &df, const float numEvents, const float xsec, const float lumi) {
+    return df.Define("weight", [=](){ return xsec / numEvents * lumi; });
+}
  
 int main(int argc, char **argv) {
+    if(argc != 5) {
+        std::cout << "Use executable with following arguments: ./skim input output cross_section integrated_luminosity" << std::endl;
+        return -1;
+    }
 
-    // Can add command-line arguments for bells and whistles, for now ignore them 
-    (void) argc;
-    (void) argv;
+    std::string input = argv[1];
+    const char *filename = input.c_str();
+    std::cout << ">>> skim.cxx: Process input: " << input << std::endl;
 
     ROOT::EnableImplicitMT(); // Tell ROOT we want to go parallel
    
     TStopwatch time;  // track how long it took our script to run
     time.Start();
 
-    // Declare inputs
-    // Use an example file from this dataset: /VBFHToTauTau_M125_TuneCP5_13TeV-powheg-pythia8/RunIISummer20UL18NanoAODv9-106X_upgrade2018_realistic_v16_L1v1-v1/NANOAODSIM
-    std::string line = "root://cmsxrootd.fnal.gov///store/mc/RunIISummer20UL18NanoAODv9/VBFHToTauTau_M125_TuneCP5_13TeV-powheg-pythia8/NANOAODSIM/106X_upgrade2018_realistic_v16_L1v1-v1/130000/5BD57963-BF8F-9A48-854D-E344A5F555BB.root";
-	const char *filename = line.c_str();
-
-    // Declare output file name
-    const std::string output = "out.root";
+    std::string output = argv[2];
     std::cout << ">>> skim.cxx: Output name: " << output << std::endl;
 
     // Get the inputs 
     TChain *ch = new TChain("Events");  // NanoAOD contains a TTree called "Events"
-	int result = ch->Add(filename);
+    int result = ch->Add(filename);
 	if (result == 0) {
 	    std::cout << ">>> [ERROR:] skim.cxx: Failed to find file Events TTree in the input NanoAOD file!" << std::endl;
         return 1;
@@ -64,15 +66,25 @@ int main(int argc, char **argv) {
 
     // Create the RDataFrame object 
     ROOT::RDataFrame df(*ch);
+    const auto numEvents = *df.Count();
+    std::cout << ">>> skim.cxx: Number of events: " << numEvents << std::endl;
+
+    const auto xsec = atof(argv[3]);
+    std::cout << ">>> skim.cxx: Cross-section: " << xsec << std::endl;
+
+    const auto lumi = atof(argv[4]);
+    std::cout << ">>> skim.cxx: Integrated luminosity: " << lumi << std::endl;
 
     ////////// Event selection
-    auto df2 = ApplyLooseSelection(df); 
-    auto df3 = SelectLeadingPair(df2);
-    auto df4 = GetLeadingPairInfo(df3);
-    auto dfFinal = df4;
+    auto df2 = AddEventWeight(df, numEvents, xsec, lumi);
+    auto df3 = ApplyLooseSelection(df2); 
+    auto df4 = SelectLeadingPair(df3);
+    auto df5 = GetLeadingPairInfo(df4);
+    auto df6 = ApplyTrigger(df5);
+    auto dfFinal = df6;
 
     // Save output n-tuple
-    std::vector<std::string> finalVariables = {"pt_1", "eta_1", "phi_1", "m_1", "pt_2", "eta_2", "phi_2", "m_2", "m_vis", "pt_vis"};
+    std::vector<std::string> finalVariables = {"weight", "pt_1", "eta_1", "phi_1", "m_1", "q_1", "pt_2", "eta_2", "phi_2", "m_2", "q_2", "m_vis", "pt_vis", "mt_1", "mt_2"};
     dfFinal.Snapshot("event_tree", output, finalVariables);
 
     // Print the cutflow report

@@ -1,20 +1,8 @@
-# Demo LUNA framework
+# Demo DY to TauTau analysis
 
 ## Introduction
 
-This is meant to be a minimal working example of the C++ RDataFrame framework developed for the `h->aa->bbtautau` analysis which can be found [here](https://gitlab.cern.ch/skkwan/lunaFramework). 
-
-Current features:
-- Instructions to run in a CMSSW environment, tested on lxplus9. There is no `cmsRun` command here, we just use CMSSW for the environment.
-- Basic skimming code, which takes NanoAOD as input, performs an example basic event selection, computes a few kinematic variables, and saves the result as a TTree in a local output file.
-
-Other features in the [full "LUNA" framework](https://gitlab.cern.ch/skkwan/lunaFramework) - please reach out if you'd like to discuss any of these:
-- More complex functions, e.g. ones that access external ROOT files (RooWorkspaces, TH1Fs).
-- Wrappers to run on many NanoAOD datasets at once.
-- C++ RDataFrame code to produce histograms.
-- Systematics handling.
-- Data/MC plotting scripts in Python.
-- Condor jobs and monitoring.
+This is a minimal working example of a SM DY to tautau cross section measurement analysis using the C++ RDataFrame framework. The structure of the code follows [demo-luna-framework](https://gitlab.cern.ch/skkwan/demo-luna-framework) and [Awesome-Workshop](https://awesome-workshop.github.io/awesome-htautau-analysis/05-plot/index.html). 
 
 ## Install
 
@@ -22,8 +10,8 @@ On `lxplus` (`lxplus9`, the default as of December 2023):
 ```bash
 cmsrel CMSSW_13_1_0_pre4
 cd src
-git clone ssh://git@gitlab.cern.ch:7999/skkwan/demo-luna-framework.git
-cd demo-luna-framework
+git clone git@github.com:pallabidas/demo-DYtoTauTau.git
+cd demo-DYtoTauTau
 ```
 
 ## To run the example

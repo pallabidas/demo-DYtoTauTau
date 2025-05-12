@@ -5,6 +5,17 @@
 
 /**********************************************************/
 
+template <typename T>
+auto ApplyTrigger(T &df) {
+  return df.Define("pass_HLT_IsoMu24", [](bool b) { return (int) b; }, {"HLT_IsoMu24"})
+	  .Define("pass_HLT_IsoMu27", [](bool b) { return (int) b; }, {"HLT_IsoMu27"})
+	  .Define("pass_HLT_Mu20Tau27",    [](bool b) { return (int) b; }, {"HLT_IsoMu20_eta2p1_LooseChargedIsoPFTauHPS27_eta2p1_CrossL1"})
+          .Define("trigger_mt_Mu24", [](int passHLTPath, float pt_1, float pt_2) {return (int) (passHLTPath && (pt_1 > 25) && (pt_2 > 20)); }, {"pass_HLT_IsoMu24", "pt_1", "pt_2"})
+	  .Define("trigger_mt_Mu27", [](int passHLTPath, float pt_1, float pt_2) {return (int) (passHLTPath && (pt_1 > 28) && (pt_2 > 20)); }, {"pass_HLT_IsoMu24", "pt_1", "pt_2"})
+	  .Define("trigger_mt_Mu20Tau27", [](int passHLTPath, float pt_1, float pt_2) {return (int) (passHLTPath && (pt_1 > 21) && (pt_2 > 32)); }, {"pass_HLT_Mu20Tau27", "pt_1", "pt_2"})
+	  .Filter("trigger_mt_Mu24 || trigger_mt_Mu27 || trigger_mt_Mu20Tau27", "looseSelection.h: ApplyTrigger: Pass IsoMu24/IsoMu27/Mu20Tau27");
+}
+
 /* 
  * Perform a basic selection to get events that have >0 reco muons and >0 reco taus.
  */
@@ -57,15 +68,19 @@ auto GetLeadingPairInfo(T &df) {
              .Define("eta_1", "Muon_eta[idx_1]")
              .Define("phi_1", "Muon_phi[idx_1]")
              .Define("m_1",   "Muon_mass[idx_1]")
+	     .Define("q_1",   "Muon_charge[idx_1]")
 
              .Define("pt_2", "Tau_pt[idx_2]")
              .Define("eta_2", "Tau_eta[idx_2]")
              .Define("phi_2", "Tau_phi[idx_2]")
              .Define("m_2",   "Tau_mass[idx_2]")
+	     .Define("q_2",   "Tau_charge[idx_2]")
 
     // Or as return values of functions
              .Define("p4_1", Helper::add_p4, {"pt_1", "eta_1", "phi_1", "m_1"})
              .Define("p4_2", Helper::add_p4, {"pt_2", "eta_2", "phi_2", "m_2"})
+	     .Define("mt_1", Helper::compute_mt, {"pt_1", "phi_1", "PuppiMET_pt", "PuppiMET_phi"})
+	     .Define("mt_2", Helper::compute_mt, {"pt_2", "phi_2", "PuppiMET_pt", "PuppiMET_phi"})
              
     // Or as lambda functions
              .Define("m_vis",  [](ROOT::Math::PtEtaPhiMVector p4_1, ROOT::Math::PtEtaPhiMVector p4_2) { return (float) (p4_1+p4_2).M();  }, {"p4_1", "p4_2"})
