@@ -26,4 +26,4 @@ fi
 #--------------------------------------------------------
 # Execute
 #--------------------------------------------------------
-./skim root://cmsxrootd.fnal.gov///store/mc/RunIISummer20UL18NanoAODv9/VBFHToTauTau_M125_TuneCP5_13TeV-powheg-pythia8/NANOAODSIM/106X_upgrade2018_realistic_v16_L1v1-v1/130000/5BD57963-BF8F-9A48-854D-E344A5F555BB.root out.root 1.55 138
+./skim /hdfs/store/data/Run2022G/Muon/NANOAOD/22Sep2023-v1/30000/90390f8e-cb55-4507-8106-6e134d7fa259.root Muon_Skim.root 1.0 3274.8 

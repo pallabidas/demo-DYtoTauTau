@@ -16,11 +16,11 @@ ROOT.gROOT.SetBatch(True)
 # Each entry in the dictionary contains of the variable name as key and a tuple
 # specifying the histogram layout as value. The tuple sets the number of bins,
 # the lower edge and the upper edge of the histogram.
-default_nbins = 30
+default_nbins = 15
 ranges = {
-        "pt_1": (default_nbins, 17, 70),
+        "pt_1": (default_nbins, 20, 70),
         "pt_2": (default_nbins, 20, 70),
-        "eta_1": (default_nbins, -2.1, 2.1),
+        "eta_1": (default_nbins, -2.4, 2.4),
         "eta_2": (default_nbins, -2.3, 2.3),
         "phi_1": (default_nbins, -3.14, 3.14),
         "phi_2": (default_nbins, -3.14, 3.14),
@@ -28,21 +28,22 @@ ranges = {
         "q_2": (2, -2, 2),
         "m_1": (default_nbins, 0, 0.2),
         "m_2": (default_nbins, 0, 2),
-        "mt_1": (default_nbins, 0, 100),
+        "mt_1": (default_nbins, 0, 50),
         "mt_2": (default_nbins, 0, 100),
         "m_vis": (default_nbins, 20, 140),
         "pt_vis": (default_nbins, 0, 60),
         }
 
 
-# Book a histogram for a specific variable
+# Book a histogram for a specific variable each entry multiplied by genWeight
 def bookHistogram(df, variable, range_):
     return df.Histo1D(ROOT.ROOT.RDF.TH1DModel(variable, variable, range_[0], range_[1], range_[2]),\
-                      variable, "weight")
+                      variable, "genWeight")
 
 
 # Write a histogram with a given name to the output ROOT file
-def writeHistogram(h, name):
+def writeHistogram(h, name, scale):
+    h.Scale(scale)
     h.SetName(name)
     h.Write()
 
@@ -52,9 +53,9 @@ def writeHistogram(h, name):
 # See the skimming step for further details about this variable.
 def filterGenMatch(df, label):
     if label == "ZTT":
-        return df.Filter("gen_match == true", "Select genuine taus")
+        return df.Filter("gen_match", "Select genuine taus")
     elif label == "ZLL":
-        return df.Filter("gen_match == false", "Select fake taus")
+        return df.Filter("!gen_match", "Select fake taus")
     else:
         return df
 
@@ -76,13 +77,23 @@ def main(sample, process, output):
     # Process skimmed datasets and produce histograms of variables
     print(">>> Process skimmed sample {} for process {}".format(sample, process))
 
-#    # Load skimmed dataset and apply baseline selection
+    # Load skimmed dataset and apply baseline selection
     df = ROOT.ROOT.RDataFrame("event_tree", sample)\
                   .Filter("mt_1<30", "Muon transverse mass cut for W+jets suppression")
+    df = filterGenMatch(df, process)
+
+    dfSum = ROOT.ROOT.RDataFrame("sumw_tree", sample)
+    sumweight = dfSum.Sum("genWeightSumw").GetValue()
+    branch_lumi = dfSum.Take["float"]("lumi").GetValue()
+    branch_xsec = dfSum.Take["float"]("xsec").GetValue()
+
+    # Scale MC histograms to luminosity using sun of genWeight
+    hist_scale = 1.0
+    if (process != "2022G"):
+        hist_scale *= (branch_lumi[0] * branch_xsec[0])/sumweight 
 
     # Book histograms for the signal region
     df1 = df.Filter("q_1*q_2<0", "Require opposited charge for signal region")
-    df1 = filterGenMatch(df1, process)
     hists = {}
     for variable in variables:
         hists[variable] = bookHistogram(df1, variable, ranges[variable])
@@ -90,7 +101,6 @@ def main(sample, process, output):
 
     # Book histograms for the control region used to estimate the QCD contribution
     df2 = df.Filter("q_1*q_2>0", "Control region for QCD estimation")
-    df2 = filterGenMatch(df2, process)
     hists_cr = {}
     for variable in variables:
         hists_cr[variable] = bookHistogram(df2, variable, ranges[variable])
@@ -103,9 +113,9 @@ def main(sample, process, output):
 
     # Write histograms to output file
     for variable in variables:
-        writeHistogram(hists[variable], "{}_{}".format(process, variable))
+        writeHistogram(hists[variable], "{}_{}".format(process, variable), hist_scale)
     for variable in variables:
-        writeHistogram(hists_cr[variable], "{}_{}_cr".format(process, variable))
+        writeHistogram(hists_cr[variable], "{}_{}_cr".format(process, variable), hist_scale)
 
     # Print cut-flow report
     print("Cut-flow report (signal region):")

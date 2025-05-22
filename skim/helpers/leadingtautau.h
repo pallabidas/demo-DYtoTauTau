@@ -9,7 +9,7 @@ template <typename T>
 auto ApplyTrigger(T &df) {
   return df.Define("pass_HLT_IsoMu24", [](bool b) { return (int) b; }, {"HLT_IsoMu24"})
 	  .Define("pass_HLT_IsoMu27", [](bool b) { return (int) b; }, {"HLT_IsoMu27"})
-	  .Define("pass_HLT_Mu20Tau27",    [](bool b) { return (int) b; }, {"HLT_IsoMu20_eta2p1_LooseChargedIsoPFTauHPS27_eta2p1_CrossL1"})
+	  .Define("pass_HLT_Mu20Tau27",    [](bool b) { return (int) b; }, {"HLT_IsoMu20_eta2p1_LooseDeepTauPFTauHPS27_eta2p1_CrossL1"})
           .Define("trigger_mt_Mu24", [](int passHLTPath, float pt_1, float pt_2) {return (int) (passHLTPath && (pt_1 > 25) && (pt_2 > 20)); }, {"pass_HLT_IsoMu24", "pt_1", "pt_2"})
 	  .Define("trigger_mt_Mu27", [](int passHLTPath, float pt_1, float pt_2) {return (int) (passHLTPath && (pt_1 > 28) && (pt_2 > 20)); }, {"pass_HLT_IsoMu24", "pt_1", "pt_2"})
 	  .Define("trigger_mt_Mu20Tau27", [](int passHLTPath, float pt_1, float pt_2) {return (int) (passHLTPath && (pt_1 > 21) && (pt_2 > 32)); }, {"pass_HLT_Mu20Tau27", "pt_1", "pt_2"})
@@ -26,11 +26,12 @@ auto ApplyLooseSelection(T &df) {
   // This new branch that we define called "goodMuons", is going to be a vector of integers of length 5 for this event (0 if that muon didn't pass these cuts, 1 if it did).
 
   return df.Define("goodMuons", "(Muon_pt > 19) && (abs(Muon_eta) < 2.4) && (Muon_mediumId == true) && (abs(Muon_dz) < 0.2) && (abs(Muon_dxy) < 0.045) && (Muon_pfRelIso04_all < 0.15)")
-           .Define("goodTaus", "(Tau_pt > 18) && (abs(Tau_eta) < 2.3) && (abs(Tau_dz) < 0.2) && (Tau_idDeepTau2017v2p1VSe & 0x04) && (Tau_idDeepTau2017v2p1VSmu & 0x01) && (Tau_idDeepTau2017v2p1VSjet & 0x01) \
-                                                && (Tau_decayMode != 5) && (Tau_decayMode != 6)")
+	   .Define("goodTaus", "(Tau_pt > 18) && (abs(Tau_eta) < 2.3) && (abs(Tau_dz) < 0.2) && (Tau_idDeepTau2017v2p1VSe > 3) && (Tau_idDeepTau2017v2p1VSjet > 3) && (Tau_idDeepTau2017v2p1VSmu > 1) && Tau_idDecayModeNewDMs && (Tau_decayMode != 5) && (Tau_decayMode != 6)")
+	   .Define("goodElectrons", "(Electron_pt > 10) && (abs(Electron_eta) < 2.5) && (abs(Electron_dz) < 0.2) && (abs(Electron_dxy) < 0.045) && (Electron_mvaTTH > 0.8) && (Electron_lostHits <= 1) && (Electron_convVeto) && (Electron_pfRelIso03_all < 0.15)")
             // Per the above comment, if we just take the sum of this vector then we'll know if the event had muons and taus in this event.
            .Filter("Sum(goodMuons) > 0", "looseSelection.h: ApplyLooseSelection: Has muons passing loose selection")
-           .Filter("Sum(goodTaus) > 0", "looseSelection.h: ApplyLooseSelection: Has taus passing loose selection");
+           .Filter("Sum(goodTaus) > 0", "looseSelection.h: ApplyLooseSelection: Has taus passing loose selection")
+	   .Filter("Sum(goodElectrons) == 0", "looseSelection.h: ApplyLooseSelection: Has no extra leptons");
 
 }
 
@@ -54,6 +55,24 @@ auto SelectLeadingPair(T &df) {
 
 }
 
+/*
+ * Check that the generator particles matched to the identified taus are
+ * actually taus and add this information to the dataset.
+ *
+ * This information is used to estimate the fraction of events that are falsely
+ * identified as taus, e.g., electrons or jets that could fake such a particle.
+ */
+template <typename T>
+auto CheckGeneratorTaus(T &df, const bool isData) {
+    if (isData) {
+        return df.Define("gen_match", "false");
+    } else {
+        return df.Define("gen_match",
+                         "Muon_genPartFlav[idx_1] == 15 && \
+                          Tau_genPartFlav[idx_2] == 5");
+    }
+}
+
 /**********************************************************/
 
 
@@ -70,7 +89,7 @@ auto GetLeadingPairInfo(T &df) {
              .Define("m_1",   "Muon_mass[idx_1]")
 	     .Define("q_1",   "Muon_charge[idx_1]")
 
-             .Define("pt_2", "Tau_pt[idx_2]")
+             .Define("pt_2",  "Tau_pt[idx_2]")
              .Define("eta_2", "Tau_eta[idx_2]")
              .Define("phi_2", "Tau_phi[idx_2]")
              .Define("m_2",   "Tau_mass[idx_2]")

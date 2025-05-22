@@ -17,41 +17,19 @@ labels = {
         "eta_2": "Tau #eta",
         "phi_1": "Muon #phi",
         "phi_2": "Tau #phi",
-        "pt_met": "Missing p_{T} / GeV",
-        "phi_met": "Missing p_{T} (#phi)",
         "q_1": "Muon charge",
         "q_2": "Tau charge",
-        "iso_1": "Muon isolation",
-        "iso_2": "Tau isolation",
         "m_1": "Muon mass / GeV",
         "m_2": "Tau mass / GeV",
         "mt_1": "Muon transverse mass / GeV",
         "mt_2": "Tau transverse mass / GeV",
-        "dm_2": "Tau decay mode",
         "m_vis": "Visible di-tau mass / GeV",
         "pt_vis": "Visible di-tau p_{T} / GeV",
-        "mjj": "Di-jet mass / GeV",
-        "ptjj": "Di-jet p_{T} / GeV",
-        "jdeta": "Di-jet #Delta#eta",
-        "jpt_1": "Leading jet p_{T} / GeV",
-        "jpt_2": "Trailing jet p_{T} / GeV",
-        "jeta_1": "Leading jet #eta",
-        "jeta_2": "Trailing jet #eta",
-        "jphi_1": "Leading jet #phi",
-        "jphi_2": "Trailing jet #phi",
-        "jm_1": "Leading jet mass / GeV",
-        "jm_2": "Trailing jet mass / GeV",
-        "jbtag_1": "Leading jet b-tag / GeV",
-        "jbtag_2": "Trailing jet b-tag / GeV",
-        "npv": "Number of primary vertices",
-        "njets": "Number of jets",
         }
 
 
 # Specify the color for each process
 colors = {
-        "ggH": ROOT.TColor.GetColor("#BF2229"),
-        "qqH": ROOT.TColor.GetColor("#00A88F"),
         "TT": ROOT.TColor.GetColor(155, 152, 204),
         "W": ROOT.TColor.GetColor(222, 90, 106),
         "QCD":  ROOT.TColor.GetColor(250, 202, 255),
@@ -77,7 +55,7 @@ def getHistogram(tfile, name, variable, tag=""):
 # There, we take the data histogram from the control region and subtract all known
 # processes defined in simulation and define the remaining part as QCD. Then,
 # this shape is extrapolated into the signal region with a scale factor.
-def main(path, output, variable, scale):
+def main(path, output, variable):
     tfile = ROOT.TFile(path, "READ")
 
     # Styles
@@ -133,31 +111,19 @@ def main(path, output, variable, scale):
     ROOT.TGaxis.SetExponentOffset(-0.08, 0.01, "Y")
 
     # Simulation
-    ggH = getHistogram(tfile, "ggH", variable)
-    qqH = getHistogram(tfile, "qqH", variable)
 
-    W = getHistogram(tfile, "W1J", variable)
-    W2J = getHistogram(tfile, "W2J", variable)
-    W3J = getHistogram(tfile, "W3J", variable)
-    W.Add(W2J)
-    W.Add(W3J)
-
+    W = getHistogram(tfile, "W", variable)
     TT = getHistogram(tfile, "TT", variable)
-
     ZLL = getHistogram(tfile, "ZLL", variable)
-
     ZTT = getHistogram(tfile, "ZTT", variable)
 
     # Data
-    data = getHistogram(tfile, "dataRunB", variable)
-    dataRunC = getHistogram(tfile, "dataRunC", variable)
-    data.Add(dataRunC)
+    data = getHistogram(tfile, "2022G", variable)
 
     # Data-driven QCD estimation
-    QCD = getHistogram(tfile, "dataRunB", variable, "_cr")
-    QCDRunC = getHistogram(tfile, "dataRunC", variable, "_cr")
-    QCD.Add(QCDRunC)
-    for name in ["W1J", "W2J", "W3J", "TT", "ZLL", "ZTT"]:
+    QCD = getHistogram(tfile, "2022G", variable, "_cr")
+
+    for name in ["ZLL", "ZTT", "W", "TT"]:
         ss = getHistogram(tfile, name, variable, "_cr")
         QCD.Add(ss, -1.0)
     for i in range(1, QCD.GetNbinsX() + 1):
@@ -169,18 +135,8 @@ def main(path, output, variable, scale):
     # Draw histograms
     data.SetMarkerStyle(20)
     data.SetLineColor(ROOT.kBlack)
-    ggH.SetLineColor(colors["ggH"])
-    qqH.SetLineColor(colors["qqH"])
 
-    scale_ggH = 10.0
-    ggH.Scale(scale_ggH)
-    scale_qqH = 100.0
-    qqH.Scale(scale_qqH)
-
-    for x in [ggH, qqH]:
-        x.SetLineWidth(3)
-
-    for x, l in [(QCD, "QCD"), (TT, "TT"), (ZLL, "ZLL"), (ZTT, "ZTT"), (W, "W")]:
+    for x, l in [(QCD, "QCD"), (ZLL, "ZLL"), (ZTT, "ZTT"), (W, "W"), (TT, "TT")]:
         x.SetLineWidth(0)
         x.SetFillColor(colors[l])
 
@@ -200,9 +156,6 @@ def main(path, output, variable, scale):
     stack.SetMaximum(max(stack.GetMaximum(), data.GetMaximum()) * 1.4)
     stack.SetMinimum(1.0)
 
-    ggH.Draw("HIST SAME")
-    qqH.Draw("HIST SAME")
-
     data.Draw("E1P SAME")
 
     # Add legend
@@ -213,8 +166,6 @@ def main(path, output, variable, scale):
     legend.AddEntry(W, "W+jets", "f")
     legend.AddEntry(TT, "t#bar{t}", "f")
     legend.AddEntry(QCD, "QCD multijet", "f")
-    legend.AddEntry(ggH, "gg#rightarrowH (x{:.0f})".format(scale_ggH), "l")
-    legend.AddEntry(qqH, "qq#rightarrowH (x{:.0f})".format(scale_qqH), "l")
     legend.AddEntry(data, "Data", "lep")
     legend.SetBorderSize(0)
     legend.Draw()
@@ -224,9 +175,9 @@ def main(path, output, variable, scale):
     latex.SetNDC()
     latex.SetTextSize(0.04)
     latex.SetTextFont(42)
-    lumi = 11.467
-    latex.DrawLatex(0.6, 0.935, "{:.1f} fb^{{-1}} (2012, 8 TeV)".format(lumi * scale))
-    latex.DrawLatex(0.16, 0.935, "#bf{CMS Open Data}")
+    lumi = 3.2748
+    latex.DrawLatex(0.55, 0.935, "{:.1f} fb^{{-1}} (2022G, 13.6 TeV)".format(lumi))
+    latex.DrawLatex(0.16, 0.935, "#bf{CMS Preliminary}")
 
     # Save
     c.SaveAs("{}/{}.pdf".format(output, variable))
@@ -238,7 +189,6 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("path", type=str, help="Full path to ROOT file with all histograms")
     parser.add_argument("output", type=str, help="Output directory for plots")
-    parser.add_argument("scale", type=float, help="Scaling of the integrated luminosity")
     args = parser.parse_args()
     for variable in labels.keys():
-        main(args.path, args.output, variable, args.scale)
+        main(args.path, args.output, variable)

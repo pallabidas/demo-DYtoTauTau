@@ -6,9 +6,9 @@ OUTPUT_DIR=$2
 # Produce histograms from skimmed samples
 while IFS=, read -r SAMPLE PROCESS
 do
-    INPUT=${INPUT_DIR}/${SAMPLE}Skim.root
+    INPUT=${INPUT_DIR}/${SAMPLE}_Skim.root
     OUTPUT=${OUTPUT_DIR}/histograms_${PROCESS}.root
-    python histograms.py $INPUT $PROCESS $OUTPUT
+    python3 histograms.py $INPUT $PROCESS $OUTPUT
 done < histograms.csv
 
 # Merge histograms in a single file

@@ -24,3 +24,17 @@ bash runSkim.sh
 ```
 
 This compiles `skim.cxx` into an executable `skim` and calls it on a remotely-located input NanoAOD file, and outputs a file to the current directory.
+The `run_interactive.sh` script can be used to run interactively with MC sample list and cross section in pb. Right now the integrated luminosity is hard-coded to be 3274.8 pb-1 in this script. After running over multiple files in a list, they should be added together using `hadd` command, per sample.
+
+## Getting histograms
+```
+cd ../plot/
+sh histograms.sh ../skim/output .
+sh plot.sh histograms.root .
+```
+
+## Finding the DY signal strength
+```
+cd ../fit/
+sh fit.sh ../plot/histograms.root .
+```
