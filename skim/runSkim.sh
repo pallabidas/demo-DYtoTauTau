@@ -26,4 +26,4 @@ fi
 #--------------------------------------------------------
 # Execute
 #--------------------------------------------------------
-./skim /hdfs/store/data/Run2022G/Muon/NANOAOD/22Sep2023-v1/30000/90390f8e-cb55-4507-8106-6e134d7fa259.root Muon_Skim.root 1.0 3274.8 
+./skim /eos/cms/store/data/Run2022G/Muon/NANOAOD/22Sep2023-v1/30000/90390f8e-cb55-4507-8106-6e134d7fa259.root Muon_Skim.root 1.0 3274.8 

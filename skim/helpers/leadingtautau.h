@@ -25,7 +25,7 @@ auto ApplyLooseSelection(T &df) {
   // Say an event has 5 muons in it, so the NanoAOD branches like Muon_pt, Muon_eta etc. are vectors of length 5 for this event. 
   // This new branch that we define called "goodMuons", is going to be a vector of integers of length 5 for this event (0 if that muon didn't pass these cuts, 1 if it did).
 
-  return df.Define("goodMuons", "(Muon_pt > 19) && (abs(Muon_eta) < 2.4) && (Muon_mediumId == true) && (abs(Muon_dz) < 0.2) && (abs(Muon_dxy) < 0.045) && (Muon_pfRelIso04_all < 0.15)")
+  return df.Define("goodMuons", "(Muon_pt > 10) && (abs(Muon_eta) < 2.4) && (Muon_mediumId == true) && (abs(Muon_dz) < 0.2) && (abs(Muon_dxy) < 0.045) && (Muon_pfRelIso04_all < 0.15)")
 	   .Define("goodTaus", "(Tau_pt > 18) && (abs(Tau_eta) < 2.3) && (abs(Tau_dz) < 0.2) && (Tau_idDeepTau2017v2p1VSe > 3) && (Tau_idDeepTau2017v2p1VSjet > 3) && (Tau_idDeepTau2017v2p1VSmu > 1) && Tau_idDecayModeNewDMs && (Tau_decayMode != 5) && (Tau_decayMode != 6)")
 	   .Define("goodElectrons", "(Electron_pt > 10) && (abs(Electron_eta) < 2.5) && (abs(Electron_dz) < 0.2) && (abs(Electron_dxy) < 0.045) && (Electron_mvaTTH > 0.8) && (Electron_lostHits <= 1) && (Electron_convVeto) && (Electron_pfRelIso03_all < 0.15)")
             // Per the above comment, if we just take the sum of this vector then we'll know if the event had muons and taus in this event.

@@ -34,7 +34,17 @@ sh plot.sh histograms.root .
 ```
 
 ## Finding the DY signal strength
+Using Roofit package:
 ```
 cd ../fit/
 sh fit.sh ../plot/histograms.root .
+```
+Using Combine tool:
+```
+combine -M FitDiagnostics MuTau.txt --justFit
+text2workspace.py MuTau.txt 
+combine MuTau.root -M MultiDimFit --saveWorkspace -n Postfit
+combine higgsCombinePostfit.MultiDimFit.mH120.root -M MultiDimFit -n Total --algo grid --snapshotName MultiDimFit --setParameterRanges r=0,4
+mv higgsCombinepostfit.MultiDimFit.mH120.root higgsCombinePostfit.MultiDimFit.mH120.root
+plot1DScan.py  higgsCombineTotal.MultiDimFit.mH120.root --main-label "Total Uncert."
 ```
